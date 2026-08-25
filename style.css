@@ -13,9 +13,9 @@
   --color-text-soft: #6E6D66;
   --color-border: #E4E2DA;
 
-  --color-accent: #7C8E7F;        /* stonowana szałwiowa zieleń */
-  --color-accent-dark: #5C6E60;
-  --color-accent-soft: #E8ECE6;
+  --color-accent: #5D7D92;        /* stonowany błękit */
+  --color-accent-dark: #46606F;
+  --color-accent-soft: #E7ECEF;
 
   /* Typografia — natywne fonty systemowe (szybkość + spójność z Apple) */
   --font-main: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
@@ -116,12 +116,12 @@ p { margin: 0; }
 .btn-primary {
   background: var(--color-accent);
   color: #fff;
-  box-shadow: 0 8px 24px rgba(92, 110, 96, 0.25);
+  box-shadow: 0 8px 24px rgba(70, 96, 111, 0.25);
 }
 .btn-primary:hover {
   background: var(--color-accent-dark);
   transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(92, 110, 96, 0.32);
+  box-shadow: 0 12px 28px rgba(70, 96, 111, 0.32);
 }
 
 .btn-secondary {
@@ -143,14 +143,14 @@ p { margin: 0; }
   border-radius: 50%;
   background: var(--color-accent);
   display: inline-block;
-  box-shadow: 0 0 0 0 rgba(124, 142, 127, 0.5);
+  box-shadow: 0 0 0 0 rgba(93, 125, 146, 0.5);
   animation: pulse 2.4s infinite;
 }
 
 @keyframes pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(124, 142, 127, 0.45); }
-  70%  { box-shadow: 0 0 0 8px rgba(124, 142, 127, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(124, 142, 127, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(93, 125, 146, 0.45); }
+  70%  { box-shadow: 0 0 0 8px rgba(93, 125, 146, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(93, 125, 146, 0); }
 }
 
 /* ---------- 4. NAGŁÓWEK / NAWIGACJA ---------- */

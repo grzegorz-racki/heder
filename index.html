@@ -194,17 +194,17 @@
         </div>
       </div>
 
-      <div class="about-gallery">
-        <figure class="about-photo">
+      <div class="about-gallery" id="about-gallery">
+        <figure class="about-photo" tabindex="0" role="button" aria-label="Powiększ zdjęcie: Zespół Heder">
           <img src="assets/zespol-heder.png" alt="Zespół Heder" loading="lazy">
         </figure>
-        <figure class="about-photo">
+        <figure class="about-photo" tabindex="0" role="button" aria-label="Powiększ zdjęcie: Usługi pogrzebowe Heder">
           <img src="assets/uslugi-pogrzebowe-heder.png" alt="Usługi pogrzebowe Heder" loading="lazy">
         </figure>
-        <figure class="about-photo">
+        <figure class="about-photo" tabindex="0" role="button" aria-label="Powiększ zdjęcie: Ceremonia pogrzebowa Heder">
           <img src="assets/pogrzeb-heder.png" alt="Ceremonia pogrzebowa Heder" loading="lazy">
         </figure>
-        <figure class="about-photo">
+        <figure class="about-photo" tabindex="0" role="button" aria-label="Powiększ zdjęcie: Krzyż — Heder">
           <img src="assets/krzyz-heder.png" alt="Krzyż — Heder" loading="lazy">
         </figure>
       </div>
@@ -385,6 +385,18 @@
   <p>&copy; <span id="year"></span> Heder sp. z o.o. — Zakład Pogrzebowy Szczecin</p>
   <button type="button" class="footer-cookie-link" id="footer-cookie-settings">Polityka prywatności i cookies</button>
 </footer>
+
+<!-- ============ LIGHTBOX — PODGLĄD ZDJĘĆ Z SEKCJI "O FIRMIE" ============ -->
+<div class="lightbox" id="lightbox" aria-hidden="true">
+  <div class="lightbox-overlay" id="lightbox-overlay"></div>
+  <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Zamknij podgląd">✕</button>
+  <button type="button" class="lightbox-arrow lightbox-arrow--prev" id="lightbox-prev" aria-label="Poprzednie zdjęcie">‹</button>
+  <figure class="lightbox-figure">
+    <img src="" alt="" id="lightbox-img">
+    <figcaption id="lightbox-caption"></figcaption>
+  </figure>
+  <button type="button" class="lightbox-arrow lightbox-arrow--next" id="lightbox-next" aria-label="Następne zdjęcie">›</button>
+</div>
 
 <!-- ============ BANNER POLITYKI COOKIES ============ -->
 <div class="cookie-banner" id="cookie-banner" role="dialog" aria-live="polite" aria-label="Informacja o plikach cookie">

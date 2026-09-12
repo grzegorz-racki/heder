@@ -42,7 +42,7 @@
    ========================================================= */
 const GOOGLE_REVIEWS_CONFIG = {
   apiKey: '',   // <-- wklej swój klucz Google Maps JavaScript API
-  placeId: '',  // <-- wklej Place ID wizytówki Heder
+  placeId: 'ChIJoSz1makJqkcRBd1gXRW1Lok',
 };
 
 /* ---------- Stan karuzeli opinii (poza DOMContentLoaded,
@@ -348,6 +348,63 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
 
   document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  /* ---------- 3a. LIGHTBOX — PEŁNY PODGLĄD ZDJĘĆ Z SEKCJI "O FIRMIE" ---------- */
+  const galleryPhotos = Array.from(document.querySelectorAll('#about-gallery .about-photo'));
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  const lightboxCaption = document.getElementById('lightbox-caption');
+  const lightboxClose = document.getElementById('lightbox-close');
+  const lightboxOverlay = document.getElementById('lightbox-overlay');
+  const lightboxPrev = document.getElementById('lightbox-prev');
+  const lightboxNext = document.getElementById('lightbox-next');
+
+  if (galleryPhotos.length && lightbox && lightboxImg) {
+    let currentPhotoIndex = 0;
+
+    function openLightbox(index) {
+      currentPhotoIndex = (index + galleryPhotos.length) % galleryPhotos.length;
+      const img = galleryPhotos[currentPhotoIndex].querySelector('img');
+      lightboxImg.src = img.src;
+      lightboxImg.alt = img.alt || '';
+      lightboxCaption.textContent = img.alt || '';
+      lightbox.classList.add('is-open');
+      lightbox.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove('is-open');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    function showNext(step) {
+      openLightbox(currentPhotoIndex + step);
+    }
+
+    galleryPhotos.forEach((photo, index) => {
+      photo.addEventListener('click', () => openLightbox(index));
+      photo.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openLightbox(index);
+        }
+      });
+    });
+
+    if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+    if (lightboxOverlay) lightboxOverlay.addEventListener('click', closeLightbox);
+    if (lightboxPrev) lightboxPrev.addEventListener('click', () => showNext(-1));
+    if (lightboxNext) lightboxNext.addEventListener('click', () => showNext(1));
+
+    document.addEventListener('keydown', (e) => {
+      if (!lightbox.classList.contains('is-open')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft') showNext(-1);
+      if (e.key === 'ArrowRight') showNext(1);
+    });
+  }
 
   /* ---------- 4. OPINIE — start z przykładowymi, próba doładowania żywych ---------- */
   initReviewsCarousel();

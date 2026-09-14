@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getHeaderOffset() {
     const header = document.getElementById('site-header');
-    return header ? header.offsetHeight + 4 : 0;
+    return header ? header.offsetHeight : 0;
   }
 
   function smoothScrollTo(targetY, duration = 700) {
@@ -332,6 +332,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.classList.add('no-aos');
   }
 
+  /* ---------- 2a. KARTY USŁUG — ROZWIJANIE NA MOBILE (dotyk zamiast hover) ---------- */
+  document.querySelectorAll('.service-card').forEach(card => {
+    card.addEventListener('click', () => {
+      if (window.innerWidth <= 780) {
+        card.classList.toggle('is-expanded');
+      }
+    });
+  });
+
   /* ---------- 3b. LICZNIKI W SEKCJI "O FIRMIE" (animowane liczby) ---------- */
   const countEls = Array.from(document.querySelectorAll('.stat-number[data-count-to]'));
   if (countEls.length) {
@@ -340,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const to = parseFloat(el.getAttribute('data-count-to'));
       const decimals = parseInt(el.getAttribute('data-decimals') || '0', 10);
       const suffix = el.getAttribute('data-suffix') || '';
-      const duration = 1600;
+      const duration = 3400;
       const startTime = performance.now();
 
       function formatNumber(value) {

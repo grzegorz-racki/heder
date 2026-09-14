@@ -2,12 +2,14 @@
 // HEDER — skrypty strony
 // 1. Menu hamburgera (mobile)
 // 2. Płynne przewijanie do sekcji (własny easing) + scroll-spy
-// 3. Kaskadowe animacje elementów przy scrollu
+// 3. AOS — inicjalizacja animacji wjazdu sekcji (jak na roder.com.pl)
+// 3a. Lightbox — pełny podgląd zdjęć z sekcji "O firmie"
 // 4. Karuzela opinii — LIVE Google Reviews (Google Places API)
 //    z automatycznym powrotem do opinii przykładowych, jeśli
 //    API nie jest jeszcze skonfigurowane lub odpowiedź się nie uda
-// 5. Banner i panel ustawień cookies
-// 6. Formularz kontaktowy — walidacja/feedback
+// 5. Formularz kontaktowy — walidacja/feedback
+// 6. Polityka cookies — prosty popup informacyjny (funkcje globalne,
+//    wzorem roder.com.pl — bez bannera zgody, bez localStorage)
 // =========================================================
 
 /* =========================================================
@@ -256,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getHeaderOffset() {
     const header = document.getElementById('site-header');
-    return header ? header.offsetHeight + 12 : 0;
+    return header ? header.offsetHeight + 4 : 0;
   }
 
   function smoothScrollTo(targetY, duration = 700) {
@@ -318,36 +320,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
   sections.forEach(sec => spyObserver.observe(sec));
 
-  /* ---------- 3. KASKADOWE ANIMACJE PRZY SCROLLU ---------- */
-  const revealGroups = [
-    '.services-grid > .service-card',
-    '.about-text',
-    '.about-gallery > .about-photo',
-    '.contact-info',
-    '.contact-form'
-    // Uwaga: .hero-inner celowo NIE jest tu dodane — hero jest widoczne
-    // od razu po wczytaniu strony, a ukrywanie go (opacity:0 do czasu
-    // wjechania w viewport) sprawiało, że animacja odbicia logo w środku
-    // odgrywała się w tle, zanim rodzic stał się widoczny.
-  ];
+  /* ---------- 3. AOS — INICJALIZACJA ANIMACJI WJAZDU SEKCJI ---------- */
+  // Ta sama biblioteka i te same ustawienia co na roder.com.pl —
+  // elementy ze znacznikiem data-aos="..." w index.html animują się
+  // przy wjeżdżaniu w widok, jednorazowo (once: true).
+  if (typeof AOS !== 'undefined') {
+    AOS.init({ duration: 800, easing: 'ease-in-out', once: true, mirror: false, offset: 50 });
+  } else {
+    // CDN z biblioteką AOS niedostępne — nie blokuj strony: pokaż
+    // wszystko od razu, bez animacji wjazdu (patrz .no-aos w CSS).
+    document.documentElement.classList.add('no-aos');
+  }
 
-  revealGroups.forEach(selector => {
-    document.querySelectorAll(selector).forEach((el, index) => {
-      el.classList.add('reveal');
-      el.style.setProperty('--reveal-index', index % 6);
-    });
-  });
+  /* ---------- 3b. LICZNIKI W SEKCJI "O FIRMIE" (animowane liczby) ---------- */
+  const countEls = Array.from(document.querySelectorAll('.stat-number[data-count-to]'));
+  if (countEls.length) {
+    function animateCount(el) {
+      const from = parseFloat(el.getAttribute('data-count-from')) || 0;
+      const to = parseFloat(el.getAttribute('data-count-to'));
+      const decimals = parseInt(el.getAttribute('data-decimals') || '0', 10);
+      const suffix = el.getAttribute('data-suffix') || '';
+      const duration = 1600;
+      const startTime = performance.now();
 
-  const revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('is-visible');
-        revealObserver.unobserve(entry.target);
+      function formatNumber(value) {
+        const rounded = decimals > 0 ? value.toFixed(decimals) : Math.round(value).toString();
+        // Separator tysięcy w stylu polskim (spacja) — tylko dla liczb całkowitych bez części dziesiętnej
+        if (decimals === 0) {
+          return Math.round(value).toLocaleString('pl-PL');
+        }
+        return rounded;
       }
-    });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
 
-  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        // ease-out — szybki start, delikatne wyhamowanie na końcu (naturalne "zatrzymanie się")
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = from + (to - from) * eased;
+        el.textContent = formatNumber(current) + suffix;
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          el.textContent = formatNumber(to) + suffix;
+        }
+      }
+      requestAnimationFrame(step);
+    }
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const countObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          if (!prefersReducedMotion) animateCount(entry.target);
+          countObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.4 });
+
+    countEls.forEach(el => countObserver.observe(el));
+  }
 
   /* ---------- 3a. LIGHTBOX — PEŁNY PODGLĄD ZDJĘĆ Z SEKCJI "O FIRMIE" ---------- */
   const galleryPhotos = Array.from(document.querySelectorAll('#about-gallery .about-photo'));
@@ -410,96 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initReviewsCarousel();
   loadLiveGoogleReviews();
 
-  /* ---------- 5. BANNER I USTAWIENIA COOKIE ---------- */
-  const COOKIE_KEY = 'heder-cookie-consent';
-  const banner = document.getElementById('cookie-banner');
-  const modal = document.getElementById('cookie-modal');
-  const overlay = document.getElementById('cookie-modal-overlay');
-  const analyticsToggle = document.getElementById('cookie-analytics');
-  const marketingToggle = document.getElementById('cookie-marketing');
-
-  function getConsent() {
-    try {
-      return JSON.parse(localStorage.getItem(COOKIE_KEY));
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function saveConsent(consent) {
-    try {
-      localStorage.setItem(COOKIE_KEY, JSON.stringify(consent));
-    } catch (e) { /* localStorage niedostępny — kontynuuj bez zapisu */ }
-  }
-
-  function showBanner() {
-    if (banner) banner.classList.add('is-visible');
-  }
-  function hideBanner() {
-    if (banner) banner.classList.remove('is-visible');
-  }
-  function openModal() {
-    if (!modal) return;
-    const consent = getConsent() || {};
-    if (analyticsToggle) analyticsToggle.checked = !!consent.analytics;
-    if (marketingToggle) marketingToggle.checked = !!consent.marketing;
-    modal.classList.add('is-open');
-    modal.setAttribute('aria-hidden', 'false');
-  }
-  function closeModal() {
-    if (!modal) return;
-    modal.classList.remove('is-open');
-    modal.setAttribute('aria-hidden', 'true');
-  }
-
-  if (!getConsent()) {
-    setTimeout(showBanner, 900);
-  }
-
-  const acceptBtn = document.getElementById('cookie-accept');
-  const settingsBtn = document.getElementById('cookie-settings');
-  const settingsLink = document.getElementById('cookie-settings-link');
-  const footerSettingsBtn = document.getElementById('footer-cookie-settings');
-  const saveBtn = document.getElementById('cookie-save');
-  const acceptAllBtn = document.getElementById('cookie-accept-all');
-
-  if (acceptBtn) acceptBtn.addEventListener('click', () => {
-    saveConsent({ necessary: true, analytics: true, marketing: true });
-    hideBanner();
-  });
-
-  if (settingsBtn) settingsBtn.addEventListener('click', () => {
-    hideBanner();
-    openModal();
-  });
-
-  if (settingsLink) settingsLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    hideBanner();
-    openModal();
-  });
-
-  if (footerSettingsBtn) footerSettingsBtn.addEventListener('click', openModal);
-
-  if (overlay) overlay.addEventListener('click', closeModal);
-
-  if (saveBtn) saveBtn.addEventListener('click', () => {
-    saveConsent({
-      necessary: true,
-      analytics: !!(analyticsToggle && analyticsToggle.checked),
-      marketing: !!(marketingToggle && marketingToggle.checked)
-    });
-    closeModal();
-  });
-
-  if (acceptAllBtn) acceptAllBtn.addEventListener('click', () => {
-    if (analyticsToggle) analyticsToggle.checked = true;
-    if (marketingToggle) marketingToggle.checked = true;
-    saveConsent({ necessary: true, analytics: true, marketing: true });
-    closeModal();
-  });
-
-  /* ---------- 6. FORMULARZ KONTAKTOWY ---------- */
+  /* ---------- 5. FORMULARZ KONTAKTOWY ---------- */
   const form = document.getElementById('contact-form');
   if (form) {
     form.addEventListener('submit', (e) => {
@@ -520,4 +463,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+});
+
+// =========================================================
+// POLITYKA COOKIES — proste okno informacyjne (wzorem roder.com.pl)
+// Funkcje globalne, wywoływane bezpośrednio z onclick w index.html.
+// Brak bannera zgody, brak kategorii, brak zapisu w localStorage —
+// to tylko informacja, którą można w każdej chwili ponownie otworzyć
+// linkiem w stopce.
+// =========================================================
+function openCookiePopup() {
+  const popup = document.getElementById('cookiePopup');
+  if (popup) {
+    popup.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeCookiePopup() {
+  const popup = document.getElementById('cookiePopup');
+  if (popup) {
+    popup.classList.remove('is-open');
+    document.body.style.overflow = '';
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeCookiePopup();
 });

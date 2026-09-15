@@ -229,6 +229,37 @@ function loadLiveGoogleReviews() {
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  /* ---------- 0. DOPASOWANIE SZEROKOŚCI DRUGIEJ LINII W PIGUŁCE TELEFONU (mobile) ---------- */
+  // "Numer aktywny 24/7" ma inną liczbę znaków niż "+48 576 801 405" —
+  // dobieramy jego font-size tak, by wizualna szerokość obu linii się
+  // pokrywała, zamiast zgadywać stały rozmiar na sztywno.
+  function matchPhonePillLineWidths() {
+    const numberEl = document.getElementById('phone-pill-number');
+    const labelEl = document.getElementById('phone-pill-label');
+    if (!numberEl || !labelEl) return;
+
+    // Reset do wartości bazowej z CSS przed pomiarem (na wypadek ponownego wywołania np. po zmianie rozmiaru okna)
+    labelEl.style.fontSize = '';
+
+    const numberWidth = numberEl.getBoundingClientRect().width;
+    const labelWidth = labelEl.getBoundingClientRect().width;
+    if (!numberWidth || !labelWidth) return;
+
+    const baseFontSize = parseFloat(window.getComputedStyle(labelEl).fontSize);
+    const scaledFontSize = baseFontSize * (numberWidth / labelWidth);
+
+    // Rozsądne granice, żeby tekst nie stał się nieczytelny ani groteskowo duży
+    const clamped = Math.max(9, Math.min(scaledFontSize, 16));
+    labelEl.style.fontSize = clamped + 'px';
+  }
+
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(matchPhonePillLineWidths);
+  } else {
+    matchPhonePillLineWidths();
+  }
+  window.addEventListener('resize', matchPhonePillLineWidths);
+
   /* ---------- 1. MENU HAMBURGERA ---------- */
   const hamburger = document.getElementById('hamburger');
   const mobileMenu = document.getElementById('mobile-menu');

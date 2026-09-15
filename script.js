@@ -251,6 +251,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.innerWidth > 780) closeMenu();
   });
 
+  // Zamknij menu mobilne po kliknięciu w dowolne inne miejsce ekranu
+  document.addEventListener('click', (e) => {
+    if (!mobileMenu.classList.contains('is-open')) return;
+    const clickedInsideMenu = mobileMenu.contains(e.target);
+    const clickedHamburger = hamburger.contains(e.target);
+    if (!clickedInsideMenu && !clickedHamburger) closeMenu();
+  });
+
   /* ---------- 2. PŁYNNE PRZEWIJANIE MIĘDZY SEKCJAMI ---------- */
   function easeInOutCubic(t) {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -341,55 +349,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ---------- 3b. LICZNIKI W SEKCJI "O FIRMIE" (animowane liczby) ---------- */
-  const countEls = Array.from(document.querySelectorAll('.stat-number[data-count-to]'));
-  if (countEls.length) {
-    function animateCount(el) {
-      const from = parseFloat(el.getAttribute('data-count-from')) || 0;
-      const to = parseFloat(el.getAttribute('data-count-to'));
-      const decimals = parseInt(el.getAttribute('data-decimals') || '0', 10);
-      const suffix = el.getAttribute('data-suffix') || '';
-      const duration = 3400;
-      const startTime = performance.now();
-
-      function formatNumber(value) {
-        const rounded = decimals > 0 ? value.toFixed(decimals) : Math.round(value).toString();
-        // Separator tysięcy w stylu polskim (spacja) — tylko dla liczb całkowitych bez części dziesiętnej
-        if (decimals === 0) {
-          return Math.round(value).toLocaleString('pl-PL');
-        }
-        return rounded;
-      }
-
-      function step(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        // ease-out — szybki start, delikatne wyhamowanie na końcu (naturalne "zatrzymanie się")
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const current = from + (to - from) * eased;
-        el.textContent = formatNumber(current) + suffix;
-        if (progress < 1) {
-          requestAnimationFrame(step);
-        } else {
-          el.textContent = formatNumber(to) + suffix;
-        }
-      }
-      requestAnimationFrame(step);
-    }
-
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const countObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          if (!prefersReducedMotion) animateCount(entry.target);
-          countObserver.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.4 });
-
-    countEls.forEach(el => countObserver.observe(el));
-  }
-
   /* ---------- 3a. LIGHTBOX — PEŁNY PODGLĄD ZDJĘĆ Z SEKCJI "O FIRMIE" ---------- */
   const galleryPhotos = Array.from(document.querySelectorAll('#about-gallery .about-photo'));
   const lightbox = document.getElementById('lightbox');
@@ -452,14 +411,42 @@ document.addEventListener('DOMContentLoaded', () => {
   loadLiveGoogleReviews();
 
   /* ---------- 5. FORMULARZ KONTAKTOWY ---------- */
+  // Strona jest statyczna (bez własnego serwera), więc formularz nie może
+  // wysłać e-maila w tle "po cichu" — zamiast tego otwiera domyślny program
+  // pocztowy odwiedzającego z gotową, wypełnioną wiadomością zaadresowaną
+  // na hederpogrzeby@gmail.com. Odwiedzający musi tylko kliknąć "Wyślij"
+  // we własnym programie pocztowym.
+  const CONTACT_EMAIL = 'hederpogrzeby@gmail.com';
   const form = document.getElementById('contact-form');
   if (form) {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+
+      const name = (form.querySelector('#name')?.value || '').trim();
+      const email = (form.querySelector('#email')?.value || '').trim();
+      const phone = (form.querySelector('#phone')?.value || '').trim();
+      const message = (form.querySelector('#message')?.value || '').trim();
+
+      const subject = `Wiadomość ze strony Heder od ${name || 'formularza kontaktowego'}`;
+      const bodyLines = [
+        `Imię: ${name}`,
+        `E-mail: ${email}`,
+        phone ? `Telefon: ${phone}` : null,
+        '',
+        'Wiadomość:',
+        message
+      ].filter(line => line !== null);
+
+      const mailtoUrl =
+        `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
+
       const button = form.querySelector('button[type="submit"]');
       const originalText = button.textContent;
-      button.textContent = 'Wiadomość wysłana ✓';
+      button.textContent = 'Otwieranie programu pocztowego…';
       button.disabled = true;
+
+      window.location.href = mailtoUrl;
+
       setTimeout(() => {
         button.textContent = originalText;
         button.disabled = false;
@@ -499,4 +486,10 @@ function closeCookiePopup() {
 
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeCookiePopup();
+});
+
+document.addEventListener('click', (e) => {
+  const popup = document.getElementById('cookiePopup');
+  // Zamknij, jeśli kliknięcie trafiło dokładnie w tło (poza oknem modala)
+  if (popup && e.target === popup) closeCookiePopup();
 });

@@ -295,9 +295,10 @@ p { margin: 0; }
 .mobile-nav-links {
   display: flex;
   flex-direction: column;
+  align-items: center;
   padding: 12px 32px 8px;
 }
-.mobile-nav-links li { border-bottom: 1px solid var(--color-border); }
+.mobile-nav-links li { border-bottom: 1px solid var(--color-border); width: 100%; text-align: center; }
 .mobile-nav-links li:last-child { border-bottom: none; }
 .mobile-nav-links .nav-link {
   display: block;
@@ -313,7 +314,7 @@ p { margin: 0; }
 /* ---------- 5. HERO / START ---------- */
 .hero {
   position: relative;
-  padding: 160px 32px 120px;
+  padding: 90px 32px 120px;
   text-align: center;
   overflow: hidden;
 }
@@ -1098,7 +1099,7 @@ img.service-icon {
   .header-actions .phone-pill { display: none; }
   .hamburger { display: flex; }
 
-  .hero { padding: 120px 24px 80px; }
+  .hero { padding: 70px 24px 80px; }
   .section-inner { padding: 0 24px; }
 
   /* Karty usług — zwinięte domyślnie (widoczny tylko tytuł),
@@ -1143,6 +1144,22 @@ img.service-icon {
     opacity: 1;
     margin-top: 10px;
   }
+
+  /* Ikona/zdjęcie usługi — ukryte, dopóki karta nie zostanie rozwinięta */
+  .service-card .service-icon {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: 0;
+    overflow: hidden;
+    transition: max-height 0.4s var(--ease), opacity 0.3s var(--ease), margin-bottom 0.4s var(--ease);
+  }
+  .service-card.is-expanded .service-icon {
+    max-height: 90px;
+    opacity: 1;
+    margin-bottom: 16px;
+    margin-top: 4px;
+  }
+
   /* Powiększenie na hover pozostaje tylko dla urządzeń z realnym kursorem */
   .service-card:hover { transform: none; box-shadow: none; }
 }
@@ -1152,6 +1169,12 @@ img.service-icon {
     max-height: 200px;
     opacity: 1;
     margin-top: 10px;
+  }
+  .service-card:hover .service-icon {
+    max-height: 90px;
+    opacity: 1;
+    margin-bottom: 16px;
+    margin-top: 4px;
   }
   .service-card:hover h3::after {
     content: "−";
